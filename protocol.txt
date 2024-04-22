@@ -1,0 +1,13 @@
+start condition
+bits 1-7: target address byte
+bit 8: read/write bit
+bit 9: continuitiy bit
+bit 10: D/C bit
+bits 11-16: control byte
+bits 17-24: data byte
+stop condition
+
+-------------------------------------
+OLED 128x32 pixels:
+PAGE 0-3
+Low column start
