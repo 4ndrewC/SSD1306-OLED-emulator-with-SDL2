@@ -8,6 +8,6 @@ bits 17-24: data byte
 stop condition
 
 -------------------------------------
-OLED 128x32 pixels:
-PAGE 0-3
-Low column start
+OLED:
+- 128x32 pixels
+- Paged memory addressing only
