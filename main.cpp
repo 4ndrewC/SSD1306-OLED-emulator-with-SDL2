@@ -1,62 +1,5 @@
 #include "sdl2.cpp"
 
-I2C line1;
-
-void print_lines(){
-    cout<<"SDA Line: ";
-    for(u8 i : line1.SDA) cout<<(int)i<<" ";
-    cout<<endl;
-    cout<<"SCL Line: ";
-    for(u8 i: line1.SCL) cout<<(int)i<<" ";
-    cout<<endl;
-}
-
-vector<u8> convert(u8 addr, u8 rw, u8 control, u8 data){
-    vector<u8> bitstream;
-    for(int i = 0; i<ADDRSIZE; i++){
-        bitstream.push_back(((addr&0X40)>>6)&1);
-        addr<<=1;
-    }
-    bitstream.push_back(rw);
-    for(int i = 0; i<CTRLSIZE+2; i++){
-        bitstream.push_back(((control&0X80)>>7)&1);
-        control<<=1;
-    }
-    for(int i = 0; i<DATASIZE; i++){
-        bitstream.push_back(((data&0X80)>>7)&1);
-        data<<=1;
-    }
-    return bitstream;
-}
-
-void run(master &plc, oled &oled1, vector<u8> bitstream){
-    cout<<">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"<<endl;
-    oled1.rec = 1;
-    oled1.state = 1;
-    plc.inputstream(bitstream);
-    oled1.check_startcond();
-    for(int i = 0; i<bitstream.size(); i++){
-        // ACK bit locations
-        if(i==ACK1 || i==ACK2 || i==ACK3){
-            if(!line1.SDA[WINDOW-1]) break;
-        }
-
-        plc.send_data(bitstream[i]);
-        oled1.receive();
-    }
-    plc.release();
-    oled1.check_stopcond();
-
-    oled1.action();
-    
-    cout<<"<<<<<<<< Bitstream summary >>>>>>>>>"<<endl;
-    cout<<"rw bit: "<<(int)oled1.rw<<endl;
-    cout<<"co bit: "<<(int)oled1.co<<endl;
-    cout<<"dc bit: "<<(int)oled1.dc<<endl;
-    cout<<"control byte: "<<hex<<(int)oled1.ctrx<<endl;
-    cout<<"data byte: "<<dec<<(int)oled1.drx<<endl;
-}
-
 
 void sample2(master &plc, oled &oled1){
 
@@ -109,27 +52,66 @@ void sample2(master &plc, oled &oled1){
 
 }
 
+void drawTopLeft(master &plc, oled &oled1){  
+    setCol(plc, oled1, 0x00);
+    setPage(plc, oled1, 0xB0);
+
+    vector<u8> stream3 = convert(0x3C, 0, 0xC0, 0x01);
+    run(plc, oled1, stream3);
+}
+
+void drawBotRight(master &plc, oled &oled1){
+    setCol(plc, oled1, 0x7F);
+    setPage(plc, oled1, 0xB3);
+
+    vector<u8> stream3 = convert(0x3C, 0, 0xC0, 0x80);
+    run(plc, oled1, stream3);
+}
+
 int main(int argc, char* args[]) {
 
     vector<u8> plcaddr = {0,1,1,1,0,0,0};
     master plc(plcaddr);
-    sample2(plc, oled1);
 
     if (!init()) {
         cout << "Failed to initialize!" << endl;
         return 1;
     }
 
-    // Drawing all pixels
-    for (int y = 0; y < oled1.HEIGHT; ++y) {
-        for (int x = 0; x < oled1.WIDTH; ++x) {
-            drawPixel(x, y, oled1.GDDR);
+    setPage(plc, oled1, 0xB0);
+    setCol(plc, oled1, 12);
+    // draw2(plc, oled1);
+
+    bool quit = false;
+    SDL_Event e;
+    int swap = 0;
+    while (!quit) {
+        // Handle events
+        while (SDL_PollEvent(&e) != 0) {
+            if (e.type == SDL_QUIT) {
+                quit = true;
+            }
         }
+
+        oled1.wipe();
+        // sample2(plc, oled1);
+        if(swap){
+            // setPage(plc, oled1, 0xB0);
+            // setCol(plc, oled1, 12);
+            draw2(plc, oled1);
+        }
+        else{
+            // setPage(plc, oled1, 0xB0);
+            // setCol(plc, oled1, 12);
+            draw3(plc, oled1);
+            // sample2(plc, oled1);
+        }
+        swap=!swap;
+
+        renderScreen(oled1.GDDR);
+        
+        SDL_Delay(50); // Add a small delay to control refresh rate
     }
-
-    SDL_RenderPresent(gRenderer); // Update the screen
-
-    SDL_Delay(5000); // Wait 5 seconds
 
     close();
     return 0;
