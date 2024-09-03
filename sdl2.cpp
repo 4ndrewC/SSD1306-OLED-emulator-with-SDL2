@@ -1,5 +1,5 @@
 #include <SDL2/SDL.h>
-#include "oled.cpp"
+#include "OLED Library/illustrator.cpp"
 
 using namespace std;
 
@@ -61,4 +61,39 @@ void drawPixel(int x, int y, vector<vector<u8>> &GDDR) {
         SDL_SetRenderDrawColor(gRenderer, 0, oled1.pixel_color, oled1.pixel_color, SDL_ALPHA_OPAQUE);
         SDL_RenderFillRect(gRenderer, &pixelRect);
     }
+}
+
+// void renderScreen(vector<vector<u8>> &GDDR) {
+//     SDL_RenderClear(gRenderer); // Clear the renderer
+
+//     // Drawing all pixels
+//     for (int y = 0; y < 32; ++y) {
+//         for (int x = 0; x < 128; ++x) {
+//             drawPixel(x, y, GDDR);
+//         }
+//     }
+
+//     SDL_RenderPresent(gRenderer); // Update the screen
+// }
+
+void renderScreen(vector<vector<u8>> &GDDR) {
+    SDL_SetRenderDrawColor(gRenderer, BACKGROUND_COLOR, BACKGROUND_COLOR, BACKGROUND_COLOR, SDL_ALPHA_OPAQUE); // Clear with background color
+    SDL_RenderClear(gRenderer); // Clear the renderer
+
+    // Drawing grid lines
+    for (int y = 0; y < 33; ++y) {
+        SDL_RenderDrawLine(gRenderer, BORDER_SPACE, BORDER_SPACE + y * (PIXEL_SIZE + SPACE_BETWEEN_PIXELS), SCREEN_WIDTH - BORDER_SPACE, BORDER_SPACE + y * (PIXEL_SIZE + SPACE_BETWEEN_PIXELS));
+    }
+    for (int x = 0; x < 129; ++x) {
+        SDL_RenderDrawLine(gRenderer, BORDER_SPACE + x * (PIXEL_SIZE + SPACE_BETWEEN_PIXELS), BORDER_SPACE, BORDER_SPACE + x * (PIXEL_SIZE + SPACE_BETWEEN_PIXELS), SCREEN_HEIGHT - BORDER_SPACE);
+    }
+
+    // Drawing all pixels
+    for (int y = 0; y < 32; ++y) {
+        for (int x = 0; x < 128; ++x) {
+            drawPixel(x, y, GDDR);
+        }
+    }
+
+    SDL_RenderPresent(gRenderer); // Update the screen
 }
